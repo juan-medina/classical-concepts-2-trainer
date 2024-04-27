@@ -51,9 +51,12 @@ format:
 run: build
 	./$(BINARY_NAME)
 web:
-#print on stdout
 	$(info "running web on http://localhost:8080/")
 	$(GORUN) github.com/hajimehoshi/wasmserve@latest $(APP_PATH)
+wasm:
+	$(info "running web on http://localhost:8000/")
+	$(GOBUILD) -o docs/cc2t.wasm $(APP_PATH)
+	python -m http.server --directory docs
 update:
 	$(GOGET) -u all
 	$(GOMOD) tidy
