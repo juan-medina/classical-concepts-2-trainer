@@ -105,7 +105,7 @@ type game struct {
 	lastUpdateTime time.Time
 }
 
-func (g *game) ShapeHit(shapeX, shapeY float32, pointX, pointY float32) bool {
+func (g game) ShapeHit(shapeX, shapeY float32, pointX, pointY float32) bool {
 	var adjustRadius float32 = TITLE_RADIUS * 1.25
 	if pointX > shapeX-adjustRadius && pointX < shapeX+adjustRadius && pointY > shapeY-adjustRadius && pointY < shapeY+adjustRadius {
 		return true
@@ -113,7 +113,7 @@ func (g *game) ShapeHit(shapeX, shapeY float32, pointX, pointY float32) bool {
 	return false
 }
 
-func (g *game) ButtonHit(x, y float32) bool {
+func (g game) ButtonHit(x, y float32) bool {
 	if x > g.buttonX && x < g.buttonX+BUTTON_WIDTH && y > g.buttonY && y < g.buttonY+BUTTON_HEIGHT {
 		return true
 	}
@@ -174,7 +174,7 @@ func (g *game) Update() error {
 	return nil
 }
 
-func (g *game) Draw(screen *ebiten.Image) {
+func (g game) Draw(screen *ebiten.Image) {
 	if g.state == StandByState {
 		vector.DrawFilledRect(screen, g.buttonX, g.buttonY, BUTTON_WIDTH, BUTTON_HEIGHT, g.buttonColor, false)
 
@@ -224,7 +224,7 @@ func (g *game) Draw(screen *ebiten.Image) {
 	vector.StrokeRect(screen, 40, HEIGHT-200, BAR_WIDTH, 100, 3, white, false)
 }
 
-func (g *game) CreateTextImage(text string, color color.Color) *ebiten.Image {
+func (g game) CreateTextImage(text string, color color.Color) *ebiten.Image {
 	textImage := image.NewRGBA(g.getTextDimensions(text))
 
 	// Draw the text on the image
