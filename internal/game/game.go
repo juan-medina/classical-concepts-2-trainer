@@ -72,6 +72,13 @@ const (
 	InvalidTile = -1
 )
 
+type GameState int
+
+const (
+	StandByState GameState = iota
+	PlayingState
+)
+
 type tile struct {
 	state    TileState
 	x        float32
@@ -88,7 +95,7 @@ type game struct {
 	bText          *ebiten.Image
 	cText          *ebiten.Image
 	dText          *ebiten.Image
-	standBy        bool
+	state          GameState
 	buttonX        float32
 	buttonY        float32
 	buttonOver     bool
@@ -114,7 +121,7 @@ func (g *game) ButtonHit(x, y float32) bool {
 }
 
 func (g *game) Update() error {
-	if g.standBy {
+	if g.state == StandByState {
 		x, y := ebiten.CursorPosition()
 		if g.ButtonHit(float32(x), float32(y)) {
 			g.buttonColor = green
@@ -137,7 +144,7 @@ func (g *game) Update() error {
 
 		if g.timeLeft <= 0 {
 			g.timeLeft = 0
-			g.standBy = true
+			g.state = StandByState
 		}
 		for r := 0; r < g.rows; r++ {
 			for c := 0; c < g.cols; c++ {
@@ -168,7 +175,7 @@ func (g *game) Update() error {
 }
 
 func (g *game) Draw(screen *ebiten.Image) {
-	if g.standBy {
+	if g.state == StandByState {
 		vector.DrawFilledRect(screen, g.buttonX, g.buttonY, BUTTON_WIDTH, BUTTON_HEIGHT, g.buttonColor, false)
 
 		op := &ebiten.DrawImageOptions{}
@@ -266,7 +273,7 @@ func (g *game) Standby() {
 			g.board[r][c].state = InvalidTile
 		}
 	}
-	g.standBy = true
+	g.state = StandByState
 }
 
 func (g *game) Reset() {
@@ -312,7 +319,7 @@ func (g *game) Reset() {
 	g.SetTile(6, 2, CenterTile)
 	g.SetTile(6, 4, AlphaTile)
 
-	g.standBy = false
+	g.state = PlayingState
 	g.timeLeft = MAX_TIME
 	g.lastUpdateTime = time.Now()
 }
