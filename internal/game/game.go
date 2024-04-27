@@ -47,6 +47,7 @@ var (
 	green     = color.RGBA64{0x0000, 0xFFFF, 0x0000, 0xFFFF}
 	white     = color.RGBA64{0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF}
 	gray      = color.RGBA64{0x2222, 0x2222, 0x2222, 0xFFFF}
+	lightGray = color.RGBA64{0x8888, 0x8888, 0x8888, 0xFFFF}
 )
 
 const (
@@ -68,6 +69,7 @@ const (
 	AlphaTile
 	BetaTile
 	CenterTile
+	MouseOverTile
 	PlayerTile
 	InvalidTile = -1
 )
@@ -121,9 +123,11 @@ func (g game) ButtonHit(x, y float32) bool {
 }
 
 func (g *game) UpdateButtons() {
+	ebiten.SetCursorShape(ebiten.CursorShapeDefault)
 	x, y := ebiten.CursorPosition()
 	if g.ButtonHit(float32(x), float32(y)) {
 		g.buttonColor = green
+		ebiten.SetCursorShape(ebiten.CursorShapePointer)
 		if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
 			g.Reset()
 		}
@@ -165,12 +169,19 @@ func (g *game) HandleMouseInBoard() {
 	cx := float32(x)
 	cy := float32(y)
 
+	ebiten.SetCursorShape(ebiten.CursorShapeDefault)
 	for r := 0; r < g.rows; r++ {
 		for c := 0; c < g.cols; c++ {
-			if g.board[r][c].state == EmptyTile {
+			if g.board[r][c].state == EmptyTile || g.board[r][c].state == MouseOverTile {
 				if g.ShapeHit(g.board[r][c].x, g.board[r][c].y, cx, cy) {
-					g.SetTile(c, r, PlayerTile)
-					return
+					ebiten.SetCursorShape(ebiten.CursorShapePointer)
+					if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+						g.SetTile(c, r, PlayerTile)
+						return
+					} else {
+						g.SetTile(c, r, MouseOverTile)
+						return
+					}
 				}
 			}
 		}
@@ -211,6 +222,8 @@ func (g game) DrawBoard(screen *ebiten.Image) {
 				shapes.DrawPolygon(screen, g.board[r][c].x, g.board[r][c].y, TITLE_RADIUS, 4, g.board[r][c].rotation-45, yellow)
 			case CenterTile:
 				shapes.DrawPolygon(screen, g.board[r][c].x, g.board[r][c].y, TITLE_RADIUS, 6, g.board[r][c].rotation, blue)
+			case MouseOverTile:
+				shapes.DrawPolygon(screen, g.board[r][c].x, g.board[r][c].y, TITLE_RADIUS*1.5, 4, g.board[r][c].rotation-45, lightGray)
 			case PlayerTile:
 				shapes.DrawPolygon(screen, g.board[r][c].x, g.board[r][c].y, TITLE_RADIUS*1.5, 4, g.board[r][c].rotation-45, white)
 			case EmptyTile:
@@ -349,16 +362,23 @@ func (g *game) Reset() {
 	g.lastUpdateTime = time.Now()
 }
 
-func (g *game) SetTile(c int, r int, state TileState) {
-	if state == PlayerTile {
-		for r := 0; r < g.rows; r++ {
-			for c := 0; c < g.cols; c++ {
-				if g.board[r][c].state == PlayerTile {
-					g.board[r][c].state = EmptyTile
-				}
+func (g *game) RemoveTileWithState(state TileState) {
+	for r := 0; r < g.rows; r++ {
+		for c := 0; c < g.cols; c++ {
+			if g.board[r][c].state == state {
+				g.board[r][c].state = EmptyTile
 			}
 		}
 	}
+}
+
+func (g *game) SetTile(c int, r int, state TileState) {
+	switch state {
+	case PlayerTile, MouseOverTile:
+		g.RemoveTileWithState(state)
+
+	}
+
 	g.board[r][c].state = state
 	g.board[r][c].rotation = 0
 }
