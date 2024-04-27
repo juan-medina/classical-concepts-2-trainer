@@ -46,7 +46,7 @@ var (
 	darkGreen = color.RGBA64{0x0000, 0x8888, 0x0000, 0xFFFF}
 	green     = color.RGBA64{0x0000, 0xFFFF, 0x0000, 0xFFFF}
 	white     = color.RGBA64{0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF}
-	gray      = color.RGBA64{0x2222, 0x2222, 0x2222, 0xFFFF}
+	gray      = color.RGBA64{0x1111, 0x1111, 0x1111, 0xFFFF}
 	lightGray = color.RGBA64{0x8888, 0x8888, 0x8888, 0xFFFF}
 )
 
@@ -79,6 +79,7 @@ type GameState int
 const (
 	StandByState GameState = iota
 	PlayingState
+	EndState
 )
 
 type tile struct {
@@ -149,7 +150,7 @@ func (g *game) UpdateTimeBar() {
 
 	if g.timeLeft <= 0 {
 		g.timeLeft = 0
-		g.state = StandByState
+		g.End()
 	}
 }
 
@@ -196,7 +197,8 @@ func (g *game) Update() error {
 		g.UpdateTimeBar()
 		g.UpdateBoard()
 		g.HandleMouseInBoard()
-
+	case EndState:
+		g.UpdateButtons()
 	}
 	return nil
 }
@@ -210,6 +212,22 @@ func (g game) DrawButtons(screen *ebiten.Image) {
 	op.GeoM.Translate(float64(g.buttonX)+70, float64(g.buttonY)-10)
 	screen.DrawImage(g.buttonText, op)
 
+}
+
+func (g game) DrawMarkers(screen *ebiten.Image) {
+	op := &ebiten.DrawImageOptions{}
+
+	op.GeoM.Translate(150, 0)
+	screen.DrawImage(g.aText, op)
+
+	op.GeoM.Translate(360, 0)
+	screen.DrawImage(g.bText, op)
+
+	op.GeoM.Translate(360, 0)
+	screen.DrawImage(g.cText, op)
+
+	op.GeoM.Translate(360, 0)
+	screen.DrawImage(g.dText, op)
 }
 
 func (g game) DrawBoard(screen *ebiten.Image) {
@@ -231,20 +249,6 @@ func (g game) DrawBoard(screen *ebiten.Image) {
 			}
 		}
 	}
-
-	op := &ebiten.DrawImageOptions{}
-
-	op.GeoM.Translate(150, 0)
-	screen.DrawImage(g.aText, op)
-
-	op.GeoM.Translate(360, 0)
-	screen.DrawImage(g.bText, op)
-
-	op.GeoM.Translate(360, 0)
-	screen.DrawImage(g.cText, op)
-
-	op.GeoM.Translate(360, 0)
-	screen.DrawImage(g.dText, op)
 }
 
 func (g game) DrawTimeBar(screen *ebiten.Image) {
@@ -256,9 +260,15 @@ func (g game) Draw(screen *ebiten.Image) {
 	switch g.state {
 	case StandByState:
 		g.DrawButtons(screen)
+		g.DrawMarkers(screen)
 	case PlayingState:
 		g.DrawBoard(screen)
 		g.DrawTimeBar(screen)
+		g.DrawMarkers(screen)
+	case EndState:
+		g.DrawButtons(screen)
+		g.DrawBoard(screen)
+		g.DrawMarkers(screen)
 	}
 }
 
@@ -312,6 +322,36 @@ func (g *game) Standby() {
 		}
 	}
 	g.state = StandByState
+}
+
+func (g *game) End() {
+
+	var states [NUM_ROWS][NUM_COLS]TileState
+
+	for r := 0; r < g.rows; r++ {
+		for c := 0; c < g.cols; c++ {
+			currentState := g.board[r][c].state
+			if currentState == AlphaTile || currentState == BetaTile || currentState == CenterTile {
+				// flip horizontally r
+				nr := g.rows - 1 - r
+				// flip vertically c
+				nc := g.cols - 1 - c
+				states[nr][nc] = currentState
+			}
+
+		}
+	}
+
+	for r := 0; r < g.rows; r++ {
+		for c := 0; c < g.cols; c++ {
+			currentState := states[r][c]
+			if currentState == AlphaTile || currentState == BetaTile || currentState == CenterTile {
+				g.board[r][c].state = currentState
+			}
+		}
+	}
+
+	g.state = EndState
 }
 
 func (g *game) Reset() {
