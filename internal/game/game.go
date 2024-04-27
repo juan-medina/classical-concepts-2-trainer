@@ -499,7 +499,7 @@ func (g *game) End() {
 					}
 				}
 			} else if objectivePosition.column == g.centerSymbolPosition.column && g.centerSymbolPosition.column == playerPosition.column {
-				if objectivePosition.row < g.centerSymbolPosition.row && g.centerSymbolPosition.row < playerPosition.row {
+				if objectivePosition.row < g.centerSymbolPosition.row {
 					if playerPosition.row > objectivePosition.row && playerPosition.row < g.centerSymbolPosition.row {
 						g.objectiveSymbolPosition = playerPosition
 						g.win = true
@@ -586,21 +586,90 @@ func (g *game) Reset() {
 	g.board[1][5].state = InvalidTile
 	g.board[3][5].state = InvalidTile
 
-	g.SetTile(0, 0, BetaTile)
-	g.SetTile(0, 2, CenterTile)
-	g.SetTile(0, 4, AlphaTile)
+	boardNum := rand.Intn(5)
 
-	g.SetTile(2, 0, CenterTile)
-	g.SetTile(2, 2, AlphaTile)
-	g.SetTile(2, 4, BetaTile)
+	switch boardNum {
+	case 0:
+		g.SetTile(0, 0, BetaTile)
+		g.SetTile(0, 2, CenterTile)
+		g.SetTile(0, 4, AlphaTile)
 
-	g.SetTile(4, 0, BetaTile)
-	g.SetTile(4, 2, BetaTile)
-	g.SetTile(4, 4, CenterTile)
+		g.SetTile(2, 0, CenterTile)
+		g.SetTile(2, 2, AlphaTile)
+		g.SetTile(2, 4, BetaTile)
 
-	g.SetTile(6, 0, AlphaTile)
-	g.SetTile(6, 2, CenterTile)
-	g.SetTile(6, 4, AlphaTile)
+		g.SetTile(4, 0, BetaTile)
+		g.SetTile(4, 2, BetaTile)
+		g.SetTile(4, 4, CenterTile)
+
+		g.SetTile(6, 0, AlphaTile)
+		g.SetTile(6, 2, CenterTile)
+		g.SetTile(6, 4, AlphaTile)
+	case 1:
+		g.SetTile(0, 0, AlphaTile)
+		g.SetTile(0, 2, CenterTile)
+		g.SetTile(0, 4, BetaTile)
+
+		g.SetTile(2, 0, CenterTile)
+		g.SetTile(2, 2, BetaTile)
+		g.SetTile(2, 4, BetaTile)
+
+		g.SetTile(4, 0, AlphaTile)
+		g.SetTile(4, 2, AlphaTile)
+		g.SetTile(4, 4, CenterTile)
+
+		g.SetTile(6, 0, AlphaTile)
+		g.SetTile(6, 2, CenterTile)
+		g.SetTile(6, 4, BetaTile)
+	case 2:
+		g.SetTile(0, 0, AlphaTile)
+		g.SetTile(0, 2, CenterTile)
+		g.SetTile(0, 4, BetaTile)
+
+		g.SetTile(2, 0, BetaTile)
+		g.SetTile(2, 2, CenterTile)
+		g.SetTile(2, 4, BetaTile)
+
+		g.SetTile(4, 0, AlphaTile)
+		g.SetTile(4, 2, AlphaTile)
+		g.SetTile(4, 4, CenterTile)
+
+		g.SetTile(6, 0, CenterTile)
+		g.SetTile(6, 2, BetaTile)
+		g.SetTile(6, 4, AlphaTile)
+	case 3:
+		g.SetTile(0, 0, AlphaTile)
+		g.SetTile(0, 2, CenterTile)
+		g.SetTile(0, 4, BetaTile)
+
+		g.SetTile(2, 0, AlphaTile)
+		g.SetTile(2, 2, AlphaTile)
+		g.SetTile(2, 4, CenterTile)
+
+		g.SetTile(4, 0, CenterTile)
+		g.SetTile(4, 2, BetaTile)
+		g.SetTile(4, 4, BetaTile)
+
+		g.SetTile(6, 0, AlphaTile)
+		g.SetTile(6, 2, CenterTile)
+		g.SetTile(6, 4, BetaTile)
+	case 4:
+		g.SetTile(0, 0, CenterTile)
+		g.SetTile(0, 2, AlphaTile)
+		g.SetTile(0, 4, BetaTile)
+
+		g.SetTile(2, 0, BetaTile)
+		g.SetTile(2, 2, BetaTile)
+		g.SetTile(2, 4, CenterTile)
+
+		g.SetTile(4, 0, AlphaTile)
+		g.SetTile(4, 2, CenterTile)
+		g.SetTile(4, 4, AlphaTile)
+
+		g.SetTile(6, 0, BetaTile)
+		g.SetTile(6, 2, CenterTile)
+		g.SetTile(6, 4, AlphaTile)
+	}
 
 	g.state = PlayingState
 	g.timeLeft = MAX_TIME
