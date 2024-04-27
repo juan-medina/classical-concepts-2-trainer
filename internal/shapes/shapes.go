@@ -62,7 +62,7 @@ func DrawPolygon(dst *ebiten.Image, centerX float32, centerY float32, radius flo
 	vs, is := path.AppendVerticesAndIndicesForFilling(nil, nil)
 
 	r, g, b, a := color.RGBA()
-	cr, cg, cb, ca := float32(r) / 0xffff, float32(g) / 0xffff, float32(b) / 0xffff, float32(a) / 0xffff
+	cr, cg, cb, ca := float32(r)/0xffff, float32(g)/0xffff, float32(b)/0xffff, float32(a)/0xffff
 
 	for i := range vs {
 		vs[i].SrcX = 1
