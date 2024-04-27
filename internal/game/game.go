@@ -120,73 +120,88 @@ func (g game) ButtonHit(x, y float32) bool {
 	return false
 }
 
-func (g *game) Update() error {
-	if g.state == StandByState {
-		x, y := ebiten.CursorPosition()
-		if g.ButtonHit(float32(x), float32(y)) {
-			g.buttonColor = green
-			if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
-				g.Reset()
-			}
-		} else {
-			g.buttonColor = darkGreen
+func (g *game) UpdateButtons() {
+	x, y := ebiten.CursorPosition()
+	if g.ButtonHit(float32(x), float32(y)) {
+		g.buttonColor = green
+		if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+			g.Reset()
 		}
 	} else {
-		// Calculate time elapsed since last update
-		elapsedTime := time.Since(g.lastUpdateTime)
-		g.lastUpdateTime = time.Now()
+		g.buttonColor = darkGreen
+	}
+}
 
-		// Convert elapsed time to milliseconds
-		elapsedMillis := elapsedTime.Milliseconds()
+func (g *game) UpdateTimeBar() {
+	// Calculate time elapsed since last update
+	elapsedTime := time.Since(g.lastUpdateTime)
+	g.lastUpdateTime = time.Now()
 
-		// Subtract elapsed time from time left
-		g.timeLeft -= float32(elapsedMillis) / 1000 // convert milliseconds to seconds
+	// Convert elapsed time to milliseconds
+	elapsedMillis := elapsedTime.Milliseconds()
 
-		if g.timeLeft <= 0 {
-			g.timeLeft = 0
-			g.state = StandByState
-		}
-		for r := 0; r < g.rows; r++ {
-			for c := 0; c < g.cols; c++ {
-				switch g.board[r][c].state {
-				case AlphaTile, BetaTile, CenterTile:
-					g.board[r][c].rotation += 1
-				}
+	// Subtract elapsed time from time left
+	g.timeLeft -= float32(elapsedMillis) / 1000 // convert milliseconds to seconds
+
+	if g.timeLeft <= 0 {
+		g.timeLeft = 0
+		g.state = StandByState
+	}
+}
+
+func (g *game) UpdateBoard() {
+	for r := 0; r < g.rows; r++ {
+		for c := 0; c < g.cols; c++ {
+			switch g.board[r][c].state {
+			case AlphaTile, BetaTile, CenterTile:
+				g.board[r][c].rotation += 1
 			}
 		}
+	}
+}
 
-		x, y := ebiten.CursorPosition()
-		cx := float32(x)
-		cy := float32(y)
+func (g *game) HandleMouseInBoard() {
+	x, y := ebiten.CursorPosition()
+	cx := float32(x)
+	cy := float32(y)
 
-		for r := 0; r < g.rows; r++ {
-			for c := 0; c < g.cols; c++ {
-				if g.board[r][c].state == EmptyTile {
-					if g.ShapeHit(g.board[r][c].x, g.board[r][c].y, cx, cy) {
-						g.SetTile(c, r, PlayerTile)
-						return nil
-					}
+	for r := 0; r < g.rows; r++ {
+		for c := 0; c < g.cols; c++ {
+			if g.board[r][c].state == EmptyTile {
+				if g.ShapeHit(g.board[r][c].x, g.board[r][c].y, cx, cy) {
+					g.SetTile(c, r, PlayerTile)
+					return
 				}
 			}
 		}
 	}
+}
 
+func (g *game) Update() error {
+	switch g.state {
+	case StandByState:
+		g.UpdateButtons()
+	case PlayingState:
+		g.UpdateTimeBar()
+		g.UpdateBoard()
+		g.HandleMouseInBoard()
+
+	}
 	return nil
 }
 
-func (g game) Draw(screen *ebiten.Image) {
-	if g.state == StandByState {
-		vector.DrawFilledRect(screen, g.buttonX, g.buttonY, BUTTON_WIDTH, BUTTON_HEIGHT, g.buttonColor, false)
+func (g game) DrawButtons(screen *ebiten.Image) {
+	vector.DrawFilledRect(screen, g.buttonX, g.buttonY, BUTTON_WIDTH, BUTTON_HEIGHT, g.buttonColor, false)
 
-		op := &ebiten.DrawImageOptions{}
-		op.ColorScale.Scale(1, 1, 1, 0.5)
+	op := &ebiten.DrawImageOptions{}
+	op.ColorScale.Scale(1, 1, 1, 0.5)
 
-		op.GeoM.Translate(float64(g.buttonX)+70, float64(g.buttonY)-10)
-		screen.DrawImage(g.buttonText, op)
+	op.GeoM.Translate(float64(g.buttonX)+70, float64(g.buttonY)-10)
+	screen.DrawImage(g.buttonText, op)
 
-		return
-	}
+}
 
+func (g game) DrawBoard(screen *ebiten.Image) {
 	for r := 0; r < g.rows; r++ {
 		for c := 0; c < g.cols; c++ {
 			switch g.board[r][c].state {
@@ -217,11 +232,21 @@ func (g game) Draw(screen *ebiten.Image) {
 
 	op.GeoM.Translate(360, 0)
 	screen.DrawImage(g.dText, op)
+}
 
-	// draw time bar
+func (g game) DrawTimeBar(screen *ebiten.Image) {
 	redLength := float32(g.timeLeft) / float32(MAX_TIME) * BAR_WIDTH
 	vector.DrawFilledRect(screen, 40, HEIGHT-200, redLength, 100, red, false)
 	vector.StrokeRect(screen, 40, HEIGHT-200, BAR_WIDTH, 100, 3, white, false)
+}
+func (g game) Draw(screen *ebiten.Image) {
+	switch g.state {
+	case StandByState:
+		g.DrawButtons(screen)
+	case PlayingState:
+		g.DrawBoard(screen)
+		g.DrawTimeBar(screen)
+	}
 }
 
 func (g game) CreateTextImage(text string, color color.Color) *ebiten.Image {
