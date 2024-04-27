@@ -27,6 +27,7 @@ import (
 	"image"
 	"image/color"
 	"io/fs"
+	"time"
 
 	"github.com/golang/freetype/truetype"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -57,8 +58,7 @@ const (
 	NUM_COLS      = 7
 	TITLE_RADIUS  = 60
 	BAR_WIDTH     = 1400
-	MAX_TIME      = 100
-	TIME_SPEED    = 0.2
+	MAX_TIME      = 15
 )
 
 type TileState int
@@ -80,21 +80,22 @@ type tile struct {
 }
 
 type game struct {
-	rows        int
-	cols        int
-	board       [NUM_ROWS][NUM_COLS]tile
-	defaultFont font.Face
-	aText       *ebiten.Image
-	bText       *ebiten.Image
-	cText       *ebiten.Image
-	dText       *ebiten.Image
-	standBy     bool
-	buttonX     float32
-	buttonY     float32
-	buttonOver  bool
-	buttonColor color.Color
-	buttonText  *ebiten.Image
-	timeLeft    float32
+	rows           int
+	cols           int
+	board          [NUM_ROWS][NUM_COLS]tile
+	defaultFont    font.Face
+	aText          *ebiten.Image
+	bText          *ebiten.Image
+	cText          *ebiten.Image
+	dText          *ebiten.Image
+	standBy        bool
+	buttonX        float32
+	buttonY        float32
+	buttonOver     bool
+	buttonColor    color.Color
+	buttonText     *ebiten.Image
+	timeLeft       float32
+	lastUpdateTime time.Time
 }
 
 func (g *game) ShapeHit(shapeX, shapeY float32, pointX, pointY float32) bool {
@@ -124,7 +125,16 @@ func (g *game) Update() error {
 			g.buttonColor = darkGreen
 		}
 	} else {
-		g.timeLeft -= TIME_SPEED
+		// Calculate time elapsed since last update
+		elapsedTime := time.Since(g.lastUpdateTime)
+		g.lastUpdateTime = time.Now()
+
+		// Convert elapsed time to milliseconds
+		elapsedMillis := elapsedTime.Milliseconds()
+
+		// Subtract elapsed time from time left
+		g.timeLeft -= float32(elapsedMillis) / 1000 // convert milliseconds to seconds
+
 		if g.timeLeft <= 0 {
 			g.timeLeft = 0
 			g.standBy = true
@@ -304,6 +314,7 @@ func (g *game) Reset() {
 
 	g.standBy = false
 	g.timeLeft = MAX_TIME
+	g.lastUpdateTime = time.Now()
 }
 
 func (g *game) SetTile(c int, r int, state TileState) {
